@@ -94,91 +94,91 @@ public class Utils
             case "000001":
                 ALU.LDR(GPR_Index, IXR_Index, EA);
                 break;
-            case 2:
-                ALU.str();
+            case "000010":
+                ALU.STR(GPR_Index, IXR_Index, EA);
                 break;
-            case 3:
-                ALU.lda();
+            case "000011":
+                ALU.LDA(GPR_Index, IXR_Index, EA);
                 break;
-            case 33:
-                ALU.ldx();
+            case "100001":
+                ALU.LDX(IXR_Index, IXEA);
                 break;
-            case 34:
-                ALU.stx();
+            case "100010":
+                ALU.STX(IXR_Index, IXEA);
                 break;
-            case 8:
-                ALU.jz();
+            case "001000":
+                ALU.JZ(GPR_Index, IXR_Index, EA);
                 break;
-            case 9:
-                ALU.jne();
+            case "001001":
+                ALU.JNE(GPR_Index, IXR_Index, EA);
                 break;
-            case 10:
-                ALU.jcc();
+            case "001010":
+                ALU.JCC(GPR_Index, IXR_Index, EA);
                 break;
-            case 11:
-                ALU.jma();
+            case "001011":
+                ALU.JMA(IXR_Index, EA);
                 break;
-            case 12:
-                ALU.jsr();
+            case "001100":
+                ALU.JSR(IXR_Index, EA);
                 break;
-            case 13:
-                ALU.rfs();
+            case "001101":
+                ALU.RFS();
                 break;
-            case 14:
-                ALU.sob();
+            case "001110":
+                ALU.SOB(GPR_Index, IXR_Index, EA);
                 break;
-            case 15:
-                ALU.jge();
+            case "001111":
+                ALU.JGE(GPR_Index, IXR_Index, EA);
                 break;
-            case 4:
-                ALU.amr();
+            case "000100":
+                ALU.AMR(GPR_Index, IXR_Index, EA);
                 break;
-            case 5:
-                ALU.smr();
+            case "000101":
+                ALU.SMR(GPR_Index, IXR_Index, EA);
                 break;
-            case 6:
-                ALU.air();
+            case "000110":
+                ALU.AIR(GPR_Index,Address);
                 break;
-            case 7:
-                ALU.sir();
+            case "000111":
+                ALU.SIR(GPR_Index,Address);
                 break;
-            case 16:
-                ALU.mlt();
+            case "010000":
+                ALU.MLT(Rx,Ry);
                 break;
-            case 17:
-                ALU.dvd();
+            case "010001":
+                ALU.DVD(Rx,Ry);
                 break;
-            case 18:
-                ALU.trr();
+            case "010010":
+                ALU.TRR(Rx,Ry);
                 break;
-            case 19:
-                ALU.and();
+            case "010011":
+                ALU.AND(Rx,Ry);
                 break;
-            case 20:
-                ALU.orr();
+            case "010100":
+                ALU.ORR(Rx,Ry);
                 break;
-            case 21:
-                ALU.not();
-            case 25:
-                ALU.src();
+            case "010101":
+                ALU.NOT(Rx);
+            case "011001":
+                ALU.SRC(GPR_Index,Count,RL,AL);
                 break;
-            case 26:
-                ALU.rrc();
+            case "011010":
+                ALU.RRC(GPR_Index,Count,RL,AL);
                 break;
-            case 49:
-                ALU.in();
+            case "110001":
+                ALU.IN(GPR_Index,DevID);
                 break;
-            case 50:
-                ALU.out();
+            case "110010":
+                ALU.OUT(GPR_Index,DevID);
                 break;
-            case 51:
-                ALU.chk();
+            case "110011":
+                ALU.CHK(GPR_Index,DevID);
                 break;
-            case 35:
-                ALU.jgt();
+            case "100011":
+                ALU.JGT();
                 break;
             default:
-                ALU.halt();
+                ALU.HALT();
                 break;
         }
 

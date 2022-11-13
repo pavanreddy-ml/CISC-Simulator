@@ -1,7 +1,7 @@
 public class ALU
 {
 
-    public static void halt()
+    public static void HALT()
     {
         SystemControl.PrintToDebugConsole("Executing Instruction 'Halt'");
 
@@ -16,79 +16,79 @@ public class ALU
     {
         SystemControl.PrintToDebugConsole("Executed Instruction 'LDR'");
 
-        Registers.GPRS[GPR_X] = Memory.get_from_memory(Utils.calculateEffectiveAddress());
+        Registers.GPRS[GPR_X] = Memory.get_from_memory(EA_X);
 
         SystemControl.PrintToDebugConsole(String.format("GPR: %d\n  EA: %H", Registers.GPRS[GPR_X], EA_X));
 
     }
 
 
-    public static void str()
+    public static void STR(int GPR_X, int IXR_X, int EA_X)
     {
         SystemControl.PrintToDebugConsole("Executed Instruction 'STR'");
 
-        Memory.store_to_memory(Utils.calculateEffectiveAddress(), Registers.GPRS[Utils.GPR_Index]);
+        Memory.store_to_memory(EA_X, Registers.GPRS[GPR_X]);
 
         SystemControl.PrintToDebugConsole("  GPR: %d\n  EA: %H");
     }
 
 
-    public static void lda()
+    public static void LDA(int GPR_X, int IXR_X, int EA_X)
     {
-        SystemControl.PrintToDebugConsole("Executed Instruction 'STR'");
+        SystemControl.PrintToDebugConsole("Executed Instruction 'LDA'");
 
-        Registers.GPRS[Utils.GPR_Index] = Utils.calculateEffectiveAddress();
+        Registers.GPRS[GPR_X] = EA_X;
 
         SystemControl.PrintToDebugConsole("  GPR: %d\n  EA: %H");
     }
 
 
-    public static void ldx()
+    public static void LDX(int IXR_X, int IXEA_X)
     {
-        SystemControl.PrintToDebugConsole("Executed Instruction 'STR'");
+        SystemControl.PrintToDebugConsole("Executed Instruction 'LDX'");
 
-        Registers.IXRS[Utils.IXR_Index] = Memory.get_from_memory(Utils.calculateEffectiveAddress_IXR());
+        Registers.IXRS[IXR_X] = Memory.get_from_memory(Utils.calculateEffectiveAddress_IXR());
 
         SystemControl.PrintToDebugConsole("  GPR: %d\n  EA: %H");
     }
 
 
-    public static void stx()
+    public static void STX(int IXR_X, int IXEA_X)
     {
-        SystemControl.PrintToDebugConsole("Executed Instruction 'STR'");
+        SystemControl.PrintToDebugConsole("Executed Instruction 'STX'");
 
-        Memory.store_to_memory(Utils.calculateEffectiveAddress_IXR(), Registers.IXRS[Utils.IXR_Index]);
+        Memory.store_to_memory(Utils.calculateEffectiveAddress_IXR(), Registers.IXRS[IXR_X]);
 
         SystemControl.PrintToDebugConsole("  GPR: %d\n  EA: %H");
     }
 
 
-    public static void jz()
+    public static void JZ(int GPR_X, int IXR_X, int EA_X)
     {
-        if (Registers.GPRS[Utils.GPR_Index] == 0) {
-            Registers.PC = Utils.calculateEffectiveAddress();
-            SystemControl.PrintToDebugConsole(String.format("Running JZ\n  GPR %d is zero, jump to %H"));
+        if (Registers.GPRS[GPR_X] == 0) {
+            Registers.PC = EA_X;
+            SystemControl.PrintToDebugConsole(String.format("Executing instruction JZ\n  GPR %d is zero, jump to %H"));
             return;
         }
-        SystemControl.PrintToDebugConsole(String.format("Running JZ\n  GPR %d is not zero, do not jump"));
+        SystemControl.PrintToDebugConsole(String.format("Executing instruction JZ\n  GPR %d is not zero, do not jump"));
     }
 
 
-    public static void jne() {
+    public static void JNE(int GPR_X, int IXR_X, int EA_X) {
 
-        if (Registers.GPRS[Utils.GPR_Index] != 0) {
-            Registers.PC = Utils.calculateEffectiveAddress();
-            SystemControl.PrintToDebugConsole(String.format("Running JNE\n  GPR %d is not zero, jump to %H"));
+        if (Registers.GPRS[GPR_X] != 0) {
+            Registers.PC = EA_X;
+            SystemControl.PrintToDebugConsole(String.format("Executing instruction JNE\n  GPR %d is not zero, jump to %H"));
             return;
         }
-        SystemControl.PrintToDebugConsole(String.format("Running JNE\n  GPR %d is zero, do not jump"));
+        SystemControl.PrintToDebugConsole(String.format("Executing instruction JNE\n  GPR %d is zero, do not jump"));
     }
 
 
-    public static void jcc() {
+    public static void JCC(int GPR_X, int IXR_X, int EA_X) {
         boolean checkflag = false;
 
-        switch (Registers.GPRS[Utils.GPR_Index]) {
+        switch (Registers.GPRS[GPR_X]) {
             case 0:
                 checkflag = Registers.CC1;
                 break;
@@ -103,141 +103,141 @@ public class ALU
                 break;
         }
         if (checkflag) {
-            Registers.PC = Utils.calculateEffectiveAddress();
-//            SystemControl.PrintToDebugConsole(String.format("Running JCC\n  CC: %d equals to required CC: %d jump to %H", SystemControl.cc, Utils.GPR_Index, ea));
+            Registers.PC = EA_X;
+//           SystemControl.PrintToDebugConsole(String.format("Executing instruction JCC\n  CC: %d equals to required CC: %d jump to %H", SystemControl.cc, GPR_X, EA_X));
             return;
         }
-//        SystemControl.PrintToDebugConsole(String.format("Running JCC\n  CC: %d does not equal to required CC: %d", SystemControl.cc, Utils.GPR_Index));
+//        SystemControl.PrintToDebugConsole(String.format("Executing instruction JCC\n  CC: %d does not equal to required CC: %d", SystemControl.cc, GPR_X));
     }
 
 
 
-    public static void jma() {
+    public static void JMA(int IXR_X, int EA_X) {
 
-        Registers.PC = Utils.calculateEffectiveAddress();
+        Registers.PC = EA_X;
 
-        SystemControl.PrintToDebugConsole(String.format("Running JMA\n  Jump to %H"));
+        SystemControl.PrintToDebugConsole(String.format("Executing instruction JMA\n  Jump to %H"));
     }
 
 
-    public static void jsr() {
+    public static void JSR(int IXR_X, int EA_X) {
         Registers.GPRS[3] = Registers.PC;
-        Registers.PC = Utils.calculateEffectiveAddress();
+        Registers.PC = EA_X;
 
-//        SystemControl.PrintToDebugConsole(String.format("Running JSR\n  Jump to %H, current Args at %H", ea, SystemControl.GPRS[0]));
+//       SystemControl.PrintToDebugConsole(String.format("Executing instruction JSR\n  Jump to %H, current Args at %H", EA_X, SystemControl.GPRS[0]));
     }
 
 
     public static void jgt() {
 
         if (Registers.GPRS[Utils.Rx] > Registers.GPRS[Utils.Ry]) {
-            Registers.PC = Utils.calculateEffectiveAddress();
-//            SystemControl.PrintToDebugConsole(String.format("Running JGT\n  Jump to %H", ea));
+            Registers.PC = EA_X;
+           SystemControl.PrintToDebugConsole(String.format("Executing instruction JGT\n  Jump to %H", EA_X));
             return;
         }
 
-//        SystemControl.PrintToDebugConsole(String.format("Running JGT\n  do not jump to %H", ea));
+        SystemControl.PrintToDebugConsole(String.format("Executing instruction JGT\n  do not jump to %H", EA_X));
     }
 
 
-    public static void rfs() {
+    public static void RFS() {
         Registers.PC = Registers.GPRS[3];
         Registers.GPRS[0] = Utils.Address;
 
-//        SystemControl.PrintToDebugConsole(String.format("Running RFS\n  Return to %H, return value at %H", SystemControl.GPRS[3], SystemControl.GPRS[0]));
+//        SystemControl.PrintToDebugConsole(String.format("Executing instruction RFS\n  Return to %H, return value at %H", SystemControl.GPRS[3], SystemControl.GPRS[0]));
     }
 
 
 
-    public static void sob() {
-        SystemControl.PrintToDebugConsole("Running SOB");
+    public static void SOB(int GPR_X, int IXR_X, int EA_X) {
+        SystemControl.PrintToDebugConsole("Executing instruction SOB");
 
-        Registers.GPRS[Utils.GPR_Index]--;
-        if (Registers.GPRS[Utils.GPR_Index] < 0) {
-            Registers.GPRS[Utils.GPR_Index] = (int) (Math.pow(2, 16) - 1);
+        Registers.GPRS[GPR_X]--;
+        if (Registers.GPRS[GPR_X] < 0) {
+            Registers.GPRS[GPR_X] = (int) (Math.pow(2, 16) - 1);
             Registers.CC2 = true;
             SystemControl.PrintToDebugConsole("  Underflow!");
         }
 
-        if (Registers.GPRS[Utils.GPR_Index] > 0) {
-            Registers.PC = Utils.calculateEffectiveAddress();
-//            SystemControl.PrintToDebugConsole(String.format("  GPR%d: %d, jump to %H", i.gprIndex, backEnd.gpr[i.gprIndex], ea));
+        if (Registers.GPRS[GPR_X] > 0) {
+            Registers.PC = EA_X;
+            SystemControl.PrintToDebugConsole(String.format("  GPR%d: %d, jump to %H", GPR_X, Registers.GPRS[Utils.GPR_Index], EA_X));
             return;
         }
-//        SystemControl.PrintToDebugConsole(String.format("  GPR%d: %d, not jump", i.gprIndex, backEnd.gpr[i.gprIndex]));
+        SystemControl.PrintToDebugConsole(String.format("  GPR%d: %d, not jump", GPR_X, Registers.GPRS[Utils.GPR_Index]));
     }
 
 
 
-    public static void jge() {
+    public static void JGE(int GPR_X, int IXR_X, int EA_X) {
 
-        if (Registers.GPRS[Utils.GPR_Index] >= 0) {
-            Registers.PC = Utils.calculateEffectiveAddress();
-//            SystemControl.PrintToDebugConsole(String.format("Running JGE\n  GRP%d: %d, jump to %H", i.gprIndex, backEnd.gpr[i.gprIndex], ea));
+        if (Registers.GPRS[GPR_X] >= 0) {
+            Registers.PC = EA_X;
+            SystemControl.PrintToDebugConsole(String.format("Executing instruction JGE\n  GRP%d: %d, jump to %H", GPR_X, Registers.GPRS[Utils.GPR_Index], EA_X));
             return;
         }
-//        SystemControl.PrintToDebugConsole(String.format("Running JGE\n  GRP%d: %d, not jump", i.gprIndex, backEnd.gpr[i.gprIndex]));
+       SystemControl.PrintToDebugConsole(String.format("Executing instruction JGE\n  GRP%d: %d, not jump", GPR_X, Registers.GPRS[Utils.GPR_Index]));
     }
 
 
-    public static void amr() {
-        SystemControl.PrintToDebugConsole("Running AMR");
+    public static void AMR(int GPR_X, int IXR_X, int EA_X) {
+        SystemControl.PrintToDebugConsole("Executing instruction AMR");
 
 
-        Registers.GPRS[Utils.GPR_Index] += Memory.get_from_memory(Utils.calculateEffectiveAddress());
-        if (Registers.GPRS[Utils.GPR_Index] > 65535) {
-            Registers.GPRS[Utils.GPR_Index] -= 65536;
+        Registers.GPRS[GPR_X] += Memory.get_from_memory(EA_X);
+        if (Registers.GPRS[GPR_X] > 65535) {
+            Registers.GPRS[GPR_X] -= 65536;
             Registers.CC1 = true;
             SystemControl.PrintToDebugConsole("  Overflow!");
         }
 
-//        SystemControl.PrintToDebugConsole(String.format("  Add %d at %H to GPR%d, result is %d", backEnd.memory[ea], ea, i.gprIndex, backEnd.gpr[i.gprIndex]));
+//        SystemControl.PrintToDebugConsole(String.format("  Add %d at %H to GPR%d, result is %d", backEnd.memory[ea], EA_X, GPR_X, Registers.GPRS[Utils.GPR_Index]));
     }
 
-    public static void smr() {
-        SystemControl.PrintToDebugConsole("Running SMR");
+    public static void SMR(int GPR_X, int IXR_X, int EA_X) {
+        SystemControl.PrintToDebugConsole("Executing instruction SMR");
 
-        Registers.GPRS[Utils.GPR_Index] -= Memory.get_from_memory(Utils.calculateEffectiveAddress());
-        if (Registers.GPRS[Utils.GPR_Index] < 0) {
-            Registers.GPRS[Utils.GPR_Index] += 65536;
+        Registers.GPRS[GPR_X] -= Memory.get_from_memory(EA_X);
+        if (Registers.GPRS[GPR_X] < 0) {
+            Registers.GPRS[GPR_X] += 65536;
             Registers.CC2 = true;
             SystemControl.PrintToDebugConsole("  Underflow!");
         }
 
-//        SystemControl.PrintToDebugConsole(String.format("  Sub %d at %H from GPR%d, result is %d", backEnd.memory[ea], ea, i.gprIndex, backEnd.gpr[i.gprIndex]));
+//       SystemControl.PrintToDebugConsole(String.format("  Sub %d at %H from GPR%d, result is %d", Registers.memory[EA_X], EA_X, GPR_X, Registers.GPRS[Utils.GPR_Index]));
     }
 
-    public static void air() {
-        SystemControl.PrintToDebugConsole("Running AIR");
+    public static void AIR(int GPR_X, int Address) {
+        SystemControl.PrintToDebugConsole("Executing instruction AIR");
 
-        Registers.GPRS[Utils.GPR_Index] += Utils.calculateEffectiveAddress();
+        Registers.GPRS[GPR_X] += Address;
 
-        if (Registers.GPRS[Utils.GPR_Index] > 65535) {
-            Registers.GPRS[Utils.GPR_Index] -= 65536;
+        if (Registers.GPRS[GPR_X] > 65535) {
+            Registers.GPRS[GPR_X] -= 65536;
             Registers.CC1 = true;
             SystemControl.PrintToDebugConsole("  Overflow!");
         }
 
-//        SystemControl.PrintToDebugConsole(String.format("  Add %d to GPR%d, result is %d", ea, i.gprIndex, backEnd.gpr[i.gprIndex]));
+       SystemControl.PrintToDebugConsole(String.format("  Add %d to GPR%d, result is %d", Address, GPR_X, Registers.GPRS[Utils.GPR_Index]));
     }
 
 
-    public static void sir() {
-        SystemControl.PrintToDebugConsole("Running SIR");
+    public static void SIR(int GPR_X, int Address) {
+        SystemControl.PrintToDebugConsole("Executing instruction SIR");
 
-        Registers.GPRS[Utils.GPR_Index] -= Utils.calculateEffectiveAddress();
+        Registers.GPRS[GPR_X] -= Address;
 
-        if (Registers.GPRS[Utils.GPR_Index] < 0) {
-            Registers.GPRS[Utils.GPR_Index] += 65536;
+        if (Registers.GPRS[GPR_X] < 0) {
+            Registers.GPRS[GPR_X] += 65536;
             Registers.CC2 = true;
             SystemControl.PrintToDebugConsole("  Underflow!");
         }
 
-//        SystemControl.PrintToDebugConsole(String.format("  Sub %d from GPR%d, result is %d", ea, i.gprIndex, backEnd.gpr[i.gprIndex]));
+      SystemControl.PrintToDebugConsole(String.format("  Sub %d from GPR%d, result is %d", Address, GPR_X, Registers.GPRS[Utils.GPR_Index]));
     }
 
-    public static void mlt() {
-        SystemControl.PrintToDebugConsole("Running MLT");
+    public static void MLT(int Rx_X,int Ry_X) {
+        SystemControl.PrintToDebugConsole("Executing instruction MLT");
 
         /*
         if (!(i.rx == 0 | i.rx == 2)) {
@@ -255,11 +255,11 @@ public class ALU
         Registers.GPRS[Utils.Rx] = Integer.parseInt(hBits, 2);
         Registers.GPRS[Utils.Rx+1] = Integer.parseInt(lBits, 2);
 
-//        SystemControl.PrintToDebugConsole(String.format("  MLT r%d with r%d, result is %d %s %s %s", i.rx, i.ry, result, resultStr, hBits, lBits));
+        SystemControl.PrintToDebugConsole(String.format("  MLT r%d with r%d, result is %d %s %s %s", Utils.Rx, Utils.Ry, result, resultStr, hBits, lBits));
     }
 
-    public static void dvd() {
-        SystemControl.PrintToDebugConsole("Running DVD");
+    public static void DVD(int Rx_X,int Ry_X) {
+        SystemControl.PrintToDebugConsole("Executing instruction DVD");
 
         /*
         if (!(i.rx == 0 | i.rx == 2)) {
@@ -280,41 +280,41 @@ public class ALU
         Registers.GPRS[Utils.Rx] = quotient;
         Registers.GPRS[Utils.Rx + 1] = remainder;
 
-//        SystemControl.PrintToDebugConsole(String.format(" DVD r%d with r%d, quotient is %d, remainder is %d", i.rx, i.ry, quotient, remainder));
+        SystemControl.PrintToDebugConsole(String.format(" DVD r%d with r%d, quotient is %d, remainder is %d", Utils.Rx, Utils.Ry, quotient, remainder));
     }
 
-    public static void trr() {
-        SystemControl.PrintToDebugConsole("Running TRR");
+    public static void TRR(int Rx_X,int Ry_X) {
+        SystemControl.PrintToDebugConsole("Executing instruction TRR");
 
         if (Registers.GPRS[Utils.Rx] == Registers.GPRS[Utils.Rx]) {
             Registers.CC4 = true;
-//            SystemControl.PrintToDebugConsole(String.format("  r%d equals to r%d", i.rx, i.ry));
+            SystemControl.PrintToDebugConsole(String.format("  r%d is equal to r%d", Utils.Rx, Utils.Ry));
             return;
         }
 
-//        SystemControl.PrintToDebugConsole(String.format("  r%d does not equal to r%d", Utils.Rx, i.ry));
+        SystemControl.PrintToDebugConsole(String.format("  r%d is not equal to r%d", Utils.Rx, Utils.Ry));
     }
 
 
-    public static void and() {
-        SystemControl.PrintToDebugConsole("Running AND");
+    public static void AND(int Rx_X,int Ry_X) {
+        SystemControl.PrintToDebugConsole("Executing instruction AND");
 
         Registers.GPRS[Utils.Rx] &= Registers.GPRS[Utils.Ry];
 
-//        SystemControl.PrintToDebugConsole(String.format("  r%d AND r%d", i.rx, i.ry));
+        SystemControl.PrintToDebugConsole(String.format("  r%d AND r%d", Utils.Rx, Utils.Ry));
     }
 
-    public static void orr() {
-        SystemControl.PrintToDebugConsole("Running ORR");
+    public static void ORR(int Rx_X,int Ry_X) {
+        SystemControl.PrintToDebugConsole("Executing instruction ORR");
 
         Registers.GPRS[Utils.Rx] |= Registers.GPRS[Utils.Ry];
 
-//        SystemControl.PrintToDebugConsole(String.format("  r%d ORR r%d", i.rx, i.ry));
+       SystemControl.PrintToDebugConsole(String.format("  r%d ORR r%d", Utils.Rx, Utils.Ry));
     }
 
 
-    public static void not() {
-        SystemControl.PrintToDebugConsole("Running NOT");
+    public static void NOT(int Rx_X) {
+        SystemControl.PrintToDebugConsole("Executing instruction NOT");
 
         int result = ~Registers.GPRS[Utils.Rx];
         String resultStr = Integer.toBinaryString(result);
@@ -322,37 +322,39 @@ public class ALU
 
         Registers.GPRS[Utils.Rx] = Integer.parseInt(resultStr, 2);
 
-//        SystemControl.PrintToDebugConsole(String.format("  NOT r%d", i.rx));
+        SystemControl.PrintToDebugConsole(String.format("  NOT r%d", Utils.Rx));
     }
 
-    public static void src() {
+    public static void SRC(int GPR_X,int Count_X,int RL_X,int AL_X) {
+        SystemControl.PrintToDebugConsole("Executing instruction SRC");
         // TODO
     }
 
-    public static void rrc() {
+    public static void RRC(int GPR_X,int Count_X,int RL_X,int AL_X) {
+        SystemControl.PrintToDebugConsole("Executing instruction RRC");
         // TODO
     }
 
-    public static void in() {
-        SystemControl.PrintToDebugConsole("Running IN");
+    public static void IN(int GPR_X,int DevID_X) {
+        SystemControl.PrintToDebugConsole("Executing IN");
 
         char c;
 
         if (Utils.DevID == 0) {
             c = IOGUI.popKBBuffer();
-            Registers.GPRS[Utils.GPR_Index] = c;
-//            SystemControl.PrintToDebugConsole(String.format("  Read %c from keyboard, store to gpr%d", c, i.gprIndex));
+            Registers.GPRS[GPR_X] = c;
+            SystemControl.PrintToDebugConsole(String.format("  Read %c from keyboard, store to gpr%d", c, GPR_X));
         } else if (Utils.DevID == 2) {
             c = IOGUI.popCRBuffer();
-            Registers.GPRS[Utils.GPR_Index] = c;
-//            SystemControl.PrintToDebugConsole(String.format("  Read %c from card reader, store to gpr%d", c, i.gprIndex));
+            Registers.GPRS[GPR_X] = c;
+            SystemControl.PrintToDebugConsole(String.format("  Read %c from card reader, store to gpr%d", c, GPR_X));
         } else {
             SystemControl.PrintToDebugConsole("  Invalid operands");
         }
     }
 
-    public static void out() {
-        SystemControl.PrintToDebugConsole("Running OUT");
+    public static void OUT(int GPR_X,int DevID_X) {
+        SystemControl.PrintToDebugConsole("Executing OUT");
 
         int devID = Utils.Address;
 
@@ -362,39 +364,39 @@ public class ALU
         }
 
         if (Utils.I_bit == 1) {
-            IOGUI.insertPrinterBuffer((char) Registers.GPRS[Utils.GPR_Index]);
+            IOGUI.insertPrinterBuffer((char) Registers.GPRS[GPR_X]);
         } else {
-           IOGUI.pushPrinterBuffer((char) Registers.GPRS[Utils.GPR_Index]);
+           IOGUI.pushPrinterBuffer((char) Registers.GPRS[GPR_X]);
         }
 
 
-//        SystemControl.PrintToDebugConsole(String.format("  Print %c to console printer", (char) backEnd.gpr[i.gprIndex]));
+    SystemControl.PrintToDebugConsole(String.format("  Print %c to console printer", (char) Registers.GPRS[GPR_X]));
     }
 
-    public static void chk() {
-        SystemControl.PrintToDebugConsole("Running CHK");
+    public static void CHK(int GPR_X,int DevID_X) {
+        SystemControl.PrintToDebugConsole("Executing CHK");
 
         if (Utils.DevID == 0) {
             if (IOGUI.isKBBufferEmpty()) {
-                Registers.GPRS[Utils.GPR_Index] = 0;
-                SystemControl.PrintToDebugConsole("  No keyboard input to read");
+                Registers.GPRS[GPR_X] = 0;
+                SystemControl.PrintToDebugConsole("  No input from keyboard to read");
             } else {
-                Registers.GPRS[Utils.GPR_Index] = 1;
-                SystemControl.PrintToDebugConsole("  There is keyboard input to read");
+                Registers.GPRS[GPR_X] = 1;
+                SystemControl.PrintToDebugConsole("  There is input to read from keyboard");
             }
         } else if (Utils.DevID == 2) {
             if (IOGUI.isCRBufferEmpty()) {
-                Registers.GPRS[Utils.GPR_Index] = 0;
-                SystemControl.PrintToDebugConsole("  No card reader input to read");
+                Registers.GPRS[GPR_X] = 0;
+                SystemControl.PrintToDebugConsole("  No input from card reader to read");
             } else {
-                Registers.GPRS[Utils.GPR_Index] = 1;
-                SystemControl.PrintToDebugConsole("  There is card reader input to read");
+                Registers.GPRS[GPR_X] = 1;
+                SystemControl.PrintToDebugConsole("  There is input to read from card reader");
             }
         } else if (Utils.DevID == 1) {
-            Registers.GPRS[Utils.GPR_Index] = 1;
-            SystemControl.PrintToDebugConsole("  Console printer is enabled");
+            Registers.GPRS[GPR_X] = 1;
+            SystemControl.PrintToDebugConsole("  Enabled: Console printer");
         } else {
-            Registers.GPRS[Utils.GPR_Index] = 0;
+            Registers.GPRS[GPR_X] = 0;
         }
     }
 }
