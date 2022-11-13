@@ -1,5 +1,11 @@
 public class Utils
 {
+    private final SystemControl systemControl;
+
+    public Utils(SystemControl systemControl) {
+        this.systemControl = systemControl;
+    }
+    
     public static int opcode_int = 0;
     public static String opcode = "000000";
     public static int GPR_Index = 0;
@@ -18,14 +24,12 @@ public class Utils
 
     public static int EA = 0;
     public static int IXEA = 0;
+    
 
 
-    public static Utils utils;
-
-
-    public static void split_instructions(int instruction_code)
+    public void split_instructions(int instruction_code)
     {
-        String Instruction_binary = String.format("%16s", Integer.toBinaryString(instruction_code).replace(' ', '0'));
+        String Instruction_binary = String.format("%16s", Integer.toBinaryString(instruction_code)).replace(' ', '0');
 
         opcode_int = Integer.parseInt(Instruction_binary.substring(0, 6), 2);
         opcode = Instruction_binary.substring(0, 6);
@@ -43,150 +47,152 @@ public class Utils
         Exponent = Integer.parseInt(Instruction_binary.substring(1, 8), 2);
         Mantissa = Integer.parseInt(Instruction_binary.substring(8), 2);
 
+        System.out.println(IXR_Index);
+
     }
 
 
 
-    public static int calculateEffectiveAddress() {
+    public int calculateEffectiveAddress() {
         if (I_bit == 0) {
-            if (IXR_Index == 0) {
-                return Address;
+            if (IXR_Index >= 0) {
+                return Address + systemControl.registers.IXRS[IXR_Index];
             } else {
-                return Address + Registers.IXRS[IXR_Index];
+                return Address;
             }
         } else {
-            if (IXR_Index == 0) {
-                return Memory.get_from_memory(Address);
+            if (IXR_Index >= 0) {
+                return systemControl.memory.get_from_memory(Address) +systemControl.memory.get_from_memory(systemControl.registers.IXRS[IXR_Index]);
             } else {
-                return Memory.get_from_memory(Address) + Memory.get_from_memory(Registers.IXRS[IXR_Index]);
+                return systemControl.memory.get_from_memory(Address);
             }
         }
     }
-    
-    
-    public static int calculateEffectiveAddress_IXR()
+
+
+    public int calculateEffectiveAddress_IXR()
     {
         if (I_bit == 0) {
             return Address;
         } else {
-            return Memory.get_from_memory(Address);
-        }    
+            return systemControl.memory.get_from_memory(Address);
+        }
     }
-    
-    
 
-    public static void execute()
+
+
+    public void execute()
     {
-        SystemControl.PrintToDebugConsole("Executing Instruction -> ");
+//        systemControl.PrintToDebugConsole("Executing Instruction -> ");
 
         EA = calculateEffectiveAddress();
         IXEA = calculateEffectiveAddress_IXR();
 
 
         if (((opcode_int >= 4 && opcode_int <= 7) || (opcode_int >= 16 && opcode_int <= 18))) {
-            Registers.CC1 = false;
-            Registers.CC2 = false;
-            Registers.CC3 = false;
-            Registers.CC4 = false;
+            systemControl.registers.CC1 = false;
+            systemControl.registers.CC2 = false;
+            systemControl.registers.CC3 = false;
+            systemControl.registers.CC4 = false;
         }
 
         switch (opcode) {
             case "000001":
-                ALU.LDR(GPR_Index, IXR_Index, EA);
+                systemControl.alu.LDR(GPR_Index, IXR_Index, EA);
                 break;
-            case 2:
-                ALU.str();
+            case "000010":
+                systemControl.alu.STR(GPR_Index, IXR_Index, EA);
                 break;
-            case 3:
-                ALU.lda();
+            case "000011":
+                systemControl.alu.LDA(GPR_Index, IXR_Index, EA);
                 break;
-            case 33:
-                ALU.ldx();
+            case "100001":
+                systemControl.alu.LDX(IXR_Index, IXEA);
                 break;
-            case 34:
-                ALU.stx();
+            case "100010":
+                systemControl.alu.STX(IXR_Index, IXEA);
                 break;
-            case 8:
-                ALU.jz();
+            case "001000":
+                systemControl.alu.JZ(GPR_Index, IXR_Index, EA);
                 break;
-            case 9:
-                ALU.jne();
+            case "001001":
+                systemControl.alu.JNE(GPR_Index, IXR_Index, EA);
                 break;
-            case 10:
-                ALU.jcc();
+            case "001010":
+                systemControl.alu.JCC(GPR_Index, IXR_Index, EA);
                 break;
-            case 11:
-                ALU.jma();
+            case "001011":
+                systemControl.alu.JMA(IXR_Index, EA);
                 break;
-            case 12:
-                ALU.jsr();
+            case "001100":
+                systemControl.alu.JSR(IXR_Index, EA);
                 break;
-            case 13:
-                ALU.rfs();
+            case "001101":
+                systemControl.alu.RFS(Address);
                 break;
-            case 14:
-                ALU.sob();
+            case "001110":
+                systemControl.alu.SOB(GPR_Index, IXR_Index, EA);
                 break;
-            case 15:
-                ALU.jge();
+            case "001111":
+                systemControl.alu.JGE(GPR_Index, IXR_Index, EA);
                 break;
-            case 4:
-                ALU.amr();
+            case "000100":
+                systemControl.alu.AMR(GPR_Index, IXR_Index, EA);
                 break;
-            case 5:
-                ALU.smr();
+            case "000101":
+                systemControl.alu.SMR(GPR_Index, IXR_Index, EA);
                 break;
-            case 6:
-                ALU.air();
+            case "000110":
+                systemControl.alu.AIR(GPR_Index,Address);
                 break;
-            case 7:
-                ALU.sir();
+            case "000111":
+                systemControl.alu.SIR(GPR_Index,Address);
                 break;
-            case 16:
-                ALU.mlt();
+            case "010000":
+                systemControl.alu.MLT(Rx,Ry);
                 break;
-            case 17:
-                ALU.dvd();
+            case "010001":
+                systemControl.alu.DVD(Rx,Ry);
                 break;
-            case 18:
-                ALU.trr();
+            case "010010":
+                systemControl.alu.TRR(Rx,Ry);
                 break;
-            case 19:
-                ALU.and();
+            case "010011":
+                systemControl.alu.AND(Rx,Ry);
                 break;
-            case 20:
-                ALU.orr();
+            case "010100":
+                systemControl.alu.ORR(Rx,Ry);
                 break;
-            case 21:
-                ALU.not();
-            case 25:
-                ALU.src();
+            case "010101":
+                systemControl.alu.NOT(Rx);
+            case "011001":
+                systemControl.alu.SRC(GPR_Index,Count,RL,AL);
                 break;
-            case 26:
-                ALU.rrc();
+            case "011010":
+                systemControl.alu.RRC(GPR_Index,Count,RL,AL);
                 break;
-            case 49:
-                ALU.in();
+            case "110001":
+                systemControl.alu.IN(GPR_Index,DevID);
                 break;
-            case 50:
-                ALU.out();
+            case "110010":
+                systemControl.alu.OUT(GPR_Index,DevID, I_bit);
                 break;
-            case 51:
-                ALU.chk();
+            case "110011":
+                systemControl.alu.CHK(GPR_Index,DevID);
                 break;
-            case 35:
-                ALU.jgt();
+            case "100011":
+                systemControl.alu.JGT(Rx, Ry, IXEA);
                 break;
             default:
-                ALU.halt();
+                systemControl.alu.HALT();
                 break;
         }
 
         if (!((opcode_int >= 4 && opcode_int <= 7) || (opcode_int >= 16 && opcode_int <= 18))) {
-            Registers.CC1 = false;
-            Registers.CC2 = false;
-            Registers.CC3 = false;
-            Registers.CC4 = false;
+            systemControl.registers.CC1 = false;
+            systemControl.registers.CC2 = false;
+            systemControl.registers.CC3 = false;
+            systemControl.registers.CC4 = false;
 
         }
 
