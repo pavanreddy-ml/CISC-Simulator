@@ -5,8 +5,7 @@ public class Utils
     public Utils(SystemControl systemControl) {
         this.systemControl = systemControl;
     }
-    
-    public static int opcode_int = 0;
+
     public static String opcode = "000000";
     public static int GPR_Index = 0;
     public static int IXR_Index = 0;
@@ -31,7 +30,6 @@ public class Utils
     {
         String Instruction_binary = String.format("%16s", Integer.toBinaryString(instruction_code)).replace(' ', '0');
 
-        opcode_int = Integer.parseInt(Instruction_binary.substring(0, 6), 2);
         opcode = Instruction_binary.substring(0, 6);
         GPR_Index = Integer.parseInt(Instruction_binary.substring(6, 8), 2);
         IXR_Index = Integer.parseInt(Instruction_binary.substring(8, 10), 2) - 1;
@@ -89,7 +87,8 @@ public class Utils
         IXEA = calculateEffectiveAddress_IXR();
 
 
-        if (((opcode_int >= 4 && opcode_int <= 7) || (opcode_int >= 16 && opcode_int <= 18))) {
+        if (((Integer.parseInt(opcode, 2) >= 4 && Integer.parseInt(opcode, 2) <= 7) ||
+                (Integer.parseInt(opcode, 2) >= 16 && Integer.parseInt(opcode, 2) <= 18))) {
             systemControl.registers.CC1 = false;
             systemControl.registers.CC2 = false;
             systemControl.registers.CC3 = false;
@@ -188,7 +187,8 @@ public class Utils
                 break;
         }
 
-        if (!((opcode_int >= 4 && opcode_int <= 7) || (opcode_int >= 16 && opcode_int <= 18))) {
+        if (!((Integer.parseInt(opcode, 2) >= 4 && Integer.parseInt(opcode, 2) <= 7) ||
+                (Integer.parseInt(opcode, 2) >= 16 && Integer.parseInt(opcode, 2) <= 18))) {
             systemControl.registers.CC1 = false;
             systemControl.registers.CC2 = false;
             systemControl.registers.CC3 = false;
