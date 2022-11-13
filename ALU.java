@@ -21,8 +21,14 @@ public class ALU
         systemControl.PrintToDebugConsole("Executed Instruction 'LDR'");
 
         systemControl.registers.GPRS[GPR_X] = systemControl.memory.get_from_memory(EA_X);
-
-        systemControl.PrintToDebugConsole(String.format("  GPR: %d\n  IXR: %d\n  EA: %H", systemControl.registers.GPRS[GPR_X], systemControl.registers.IXRS[IXR_X], EA_X));
+        
+        if (IXR_X < 0) {
+            systemControl.PrintToDebugConsole(String.format("  GPR: %d\n  IXR: %s\n  EA: %H", systemControl.registers.GPRS[GPR_X], "None", EA_X));
+        }
+        else
+        {
+            systemControl.PrintToDebugConsole(String.format("  GPR: %d\n  IXR: %d\n  EA: %H", systemControl.registers.GPRS[GPR_X], systemControl.registers.IXRS[IXR_X], EA_X));
+        }
 
     }
 
@@ -33,7 +39,13 @@ public class ALU
 
         systemControl.memory.store_to_memory(EA_X, systemControl.registers.GPRS[GPR_X]);
 
-        systemControl.PrintToDebugConsole(String.format("  GPR: %d\n  IXR: %d\n  EA: %H", systemControl.registers.GPRS[GPR_X], systemControl.registers.IXRS[IXR_X], EA_X));
+        if (IXR_X < 0) {
+            systemControl.PrintToDebugConsole(String.format("  GPR: %d\n  IXR: %s\n  EA: %H", systemControl.registers.GPRS[GPR_X], "None", EA_X));
+        }
+        else
+        {
+            systemControl.PrintToDebugConsole(String.format("  GPR: %d\n  IXR: %d\n  EA: %H", systemControl.registers.GPRS[GPR_X], systemControl.registers.IXRS[IXR_X], EA_X));
+        }
     }
 
 
@@ -43,7 +55,13 @@ public class ALU
 
         systemControl.registers.GPRS[GPR_X] = EA_X;
 
-        systemControl.PrintToDebugConsole(String.format("  GPR: %d\n  IXR: %d\n  EA: %H", systemControl.registers.GPRS[GPR_X], systemControl.registers.IXRS[IXR_X], EA_X));
+        if (IXR_X < 0) {
+            systemControl.PrintToDebugConsole(String.format("  GPR: %d\n  IXR: %s\n  EA: %H", systemControl.registers.GPRS[GPR_X], "None", EA_X));
+        }
+        else
+        {
+            systemControl.PrintToDebugConsole(String.format("  GPR: %d\n  IXR: %d\n  EA: %H", systemControl.registers.GPRS[GPR_X], systemControl.registers.IXRS[IXR_X], EA_X));
+        }
     }
 
 
@@ -53,7 +71,13 @@ public class ALU
 
         systemControl.registers.IXRS[IXR_X] = systemControl.memory.get_from_memory(IXEA_X);
 
-        systemControl.PrintToDebugConsole(String.format("  IXR: %d\n  EA: %H", systemControl.registers.IXRS[IXR_X], IXEA_X));
+        if (IXR_X < 0) {
+            systemControl.PrintToDebugConsole(String.format("  IXR: %s\n  EA: %H", "None", IXEA_X));
+        }
+        else
+        {
+            systemControl.PrintToDebugConsole(String.format("  IXR: %d\n  EA: %H", systemControl.registers.IXRS[IXR_X], IXEA_X));
+        }
     }
 
 
@@ -63,7 +87,13 @@ public class ALU
 
         systemControl.memory.store_to_memory(IXEA_X, systemControl.registers.IXRS[IXR_X]);
 
-        systemControl.PrintToDebugConsole(String.format("  IXR: %d\n  EA: %H", systemControl.registers.IXRS[IXR_X], IXEA_X));
+        if (IXR_X < 0) {
+            systemControl.PrintToDebugConsole(String.format("  IXR: %s\n  EA: %H", "None", IXEA_X));
+        }
+        else
+        {
+            systemControl.PrintToDebugConsole(String.format("  IXR: %d\n  EA: %H", systemControl.registers.IXRS[IXR_X], IXEA_X));
+        }
     }
 
 
