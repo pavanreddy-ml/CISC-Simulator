@@ -1,741 +1,327 @@
-import java.math.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
-public class ALU {
+public class Utils {
+
     public SystemCore systemCore;
 
-    //It redirects to the backend
-    public ALU(SystemCore systemCore) {
+    public Utils(SystemCore systemCore) {
         this.systemCore = systemCore;
     }
-    //Connecting and updating the IXR
 
-    //Defining the Halt
-    public void halt() {
-        systemCore.systemSettings.Running = false;
-        systemCore.systemSettings.Idle = true;
-
-        systemCore.frame.PrintToDebugConsole("Executing Halt");
+    public void LoadProgram(File file) {
+        String line;
+        int Address;
+        int content;
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            line = br.readLine();
+            while (line != null) {
+                Address = Integer.parseInt(line.substring(0, 4), 16);
+                content = Integer.parseInt(line.substring(5, 9), 16);
+                systemCore.memory.ProcessorMemory[Address] = content;
+                line = br.readLine();
+            }
+            systemCore.frame.PrintToDebugConsole(String.format("Program %s loaded", file.getName()));
+        } catch (IOException e) {
+            systemCore.frame.PrintToDebugConsole(String.format("Program %s doesn't exist", file.getName()));
+        }
     }
 
-    //Defining the Trap
-    public void trap(InstructionComponents instruction) {
-        systemCore.memory.WriteToMemory(2, systemCore.registers.PC + 1);
-
-        systemCore.registers.PC = systemCore.memory.ReadFromMemory(systemCore.memory.ReadFromMemory(0) + instruction.TrapCode);
-
-        systemCore.frame.PrintToDebugConsole("Executing TRAP");
-    }
+    public void exec(InstructionComponents instruction) throws Exception {
+        instruction.EA = computeEA(instruction);
+        instruction.IXEA = computeIXREA(instruction);
 
 
-    //Defining the LDR
-    public void LDR(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing LDR");
-        int ea = instruction.EA;
-
-        if (ea > systemCore.memory.ProcessorMemory.length) {
-            systemCore.registers.MFR |= 8;
-            systemCore.frame.PrintToDebugConsole("Illegal Memory Address beyond " + systemCore.memory.ProcessorMemory.length);
-            systemCore.registers.PC = systemCore.memory.ReadFromMemory(1);
-            return;
+        if (((instruction.opcode >= 4 && instruction.opcode <= 7) || (instruction.opcode >= 16 && instruction.opcode <= 18) || (instruction.opcode >= 25 && instruction.opcode <= 26))) {
+            systemCore.registers.CC = 0;
         }
 
-        if (ea >= 0 && ea <= 5) {
-            systemCore.registers.MFR |= 1;
-            systemCore.frame.PrintToDebugConsole("Illegal Memory Address to Reserved Locations");
-            systemCore.registers.PC = systemCore.memory.ReadFromMemory(1);
-            return;
-        }
-
-        systemCore.registers.GPRS[instruction.GPR_Index] = (systemCore.memory.ReadFromMemory(ea));
-
-        systemCore.frame.PrintToDebugConsole(String.format("  GPR: %d\n  EA: %H", instruction.GPR_Index, ea));
-    }
-
-    //Defining the STR
-    public void STR(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing STR");
-
-        int ea = instruction.EA;
-
-        if (ea > systemCore.memory.ProcessorMemory.length) {
-            systemCore.registers.MFR |= 8;
-            systemCore.frame.PrintToDebugConsole("Illegal Memory Address beyond " + systemCore.memory.ProcessorMemory.length);
-            systemCore.registers.PC = systemCore.memory.ReadFromMemory(1);
-            return;
-        }
-
-        if (ea >= 0 && ea <= 5) {
-            systemCore.registers.MFR |= 1;
-            systemCore.frame.PrintToDebugConsole("Illegal Memory Address to Reserved Locations");
-            systemCore.registers.PC = systemCore.memory.ReadFromMemory(1);
-            return;
-        }
-
-        systemCore.memory.WriteToMemory(ea, systemCore.registers.GPRS[instruction.GPR_Index]);
-
-        systemCore.frame.PrintToDebugConsole(String.format("  GPR: %d\n  EA: %H", instruction.GPR_Index, ea));
-    }
-
-    //Defining the LDA
-    public void LDA(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing LDA");
-
-        int ea = instruction.EA;
-
-        systemCore.registers.GPRS[instruction.GPR_Index] = ea;
-
-        systemCore.frame.PrintToDebugConsole(String.format("  GPR: %d\n  EA: %H", instruction.GPR_Index, ea));
-    }
-
-    public void LDX(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing LDX");
-
-        int ea = instruction.IXEA;
-
-        if (ea > systemCore.memory.ProcessorMemory.length) {
-            systemCore.registers.MFR |= 8;
-            systemCore.frame.PrintToDebugConsole("Illegal Memory Address beyond " + systemCore.memory.ProcessorMemory.length);
-            systemCore.registers.PC = systemCore.memory.ReadFromMemory(1);
-            return;
-        }
-
-        if (ea >= 0 && ea <= 5) {
-            systemCore.registers.MFR |= 1;
-            systemCore.frame.PrintToDebugConsole("Illegal Memory Address to Reserved Locations");
-            systemCore.registers.PC = systemCore.memory.ReadFromMemory(1);
-            return;
-        }
-
-        systemCore.registers.IXRS[instruction.IXR_Index] = systemCore.memory.ReadFromMemory(ea);
-
-        systemCore.frame.PrintToDebugConsole(String.format("  IXR: %d\n  EA: %H", instruction.IXR_Index, ea));
-    }
-
-    //Defining the STX
-    public void STX(InstructionComponents instruction) {
-        int ea = instruction.IXEA;
-
-        if (ea > systemCore.memory.ProcessorMemory.length) {
-            systemCore.registers.MFR |= 8;
-            systemCore.frame.PrintToDebugConsole("Illegal Memory Address beyond " + systemCore.memory.ProcessorMemory.length);
-            systemCore.registers.PC = systemCore.memory.ReadFromMemory(1);
-            return;
-        }
-
-        if (ea >= 0 && ea <= 5) {
-            systemCore.registers.MFR |= 1;
-            systemCore.frame.PrintToDebugConsole("Illegal Memory Address to Reserved Locations");
-            systemCore.registers.PC = systemCore.memory.ReadFromMemory(1);
-            return;
-        }
-
-        systemCore.memory.WriteToMemory(ea, systemCore.registers.IXRS[instruction.IXR_Index]);
-
-        systemCore.frame.PrintToDebugConsole(String.format("Executing STX\n  IXR: %d\n  EA: %H", instruction.IXR_Index, ea));
-    }
-
-    //Defining the JZ
-    public void JZ(InstructionComponents instruction) {
-        int ea = instruction.EA;
-
-        if (systemCore.registers.GPRS[instruction.GPR_Index] == 0) {
-            systemCore.registers.PC = ea;
-            systemCore.frame.PrintToDebugConsole(String.format("Executing JZ\n  GPR %d is zero, jump to %H", instruction.GPR_Index, ea));
-            return;
-        }
-        systemCore.frame.PrintToDebugConsole(String.format("Executing JZ\n  GPR %d is not zero, do not jump", instruction.GPR_Index));
-    }
-
-    //Defining the JNE
-    public void JNE(InstructionComponents instruction) {
-        int ea = instruction.EA;
-
-        if (systemCore.registers.GPRS[instruction.GPR_Index] != 0) {
-            systemCore.registers.PC = ea;
-            systemCore.frame.PrintToDebugConsole(String.format("Executing JNE\n  GPR %d is not zero, jump to %H", instruction.GPR_Index, ea));
-            return;
-        }
-        systemCore.frame.PrintToDebugConsole(String.format("Executing JNE\n  GPR %d is zero, do not jump", instruction.GPR_Index));
-    }
-
-    //Defining the JCC
-    public void JCC(InstructionComponents instruction) {
-        int ea = instruction.EA;
-        int bitMask = 0;
-
-        switch (instruction.GPR_Index) {
+        switch (instruction.opcode) {
             case 0:
-                bitMask = 1; // 0001
+                systemCore.alu.halt();
                 break;
             case 1:
-                bitMask = 2; // 0010
+                systemCore.alu.LDR(instruction);
                 break;
             case 2:
-                bitMask = 4; // 0100
+                systemCore.alu.STR(instruction);
                 break;
             case 3:
-                bitMask = 8; // 1000
+                systemCore.alu.LDA(instruction);
+                break;
+            case 41:
+                systemCore.alu.LDX(instruction);
+                break;
+            case 42:
+                systemCore.alu.STX(instruction);
+                break;
+            case 10:
+                systemCore.alu.JZ(instruction);
+                break;
+            case 11:
+                systemCore.alu.JNE(instruction);
+                break;
+            case 12:
+                systemCore.alu.JCC(instruction);
+                break;
+            case 13:
+                systemCore.alu.JMA(instruction);
+                break;
+            case 14:
+                systemCore.alu.JSR(instruction);
+                break;
+            case 15:
+                systemCore.alu.RFS(instruction);
+                break;
+            case 16:
+                systemCore.alu.SOB(instruction);
+                break;
+            case 17:
+                systemCore.alu.JGE(instruction);
+                break;
+            case 4:
+                systemCore.alu.AMR(instruction);
+                break;
+            case 5:
+                systemCore.alu.SMR(instruction);
+                break;
+            case 6:
+                systemCore.alu.AIR(instruction);
+                break;
+            case 7:
+                systemCore.alu.SIR(instruction);
+                break;
+            case 20:
+                systemCore.alu.MLT(instruction);
+                break;
+            case 21:
+                systemCore.alu.DVD(instruction);
+                break;
+            case 22:
+                systemCore.alu.TRR(instruction);
+                break;
+            case 23:
+                systemCore.alu.AND(instruction);
+                break;
+            case 24:
+                systemCore.alu.ORR(instruction);
+                break;
+            case 25:
+                systemCore.alu.NOT(instruction);
+                break;
+            case 31:
+                systemCore.alu.SRC(instruction);
+                break;
+            case 32:
+                systemCore.alu.RRC(instruction);
+                break;
+            case 61:
+                systemCore.alu.IN(instruction);
+                break;
+            case 62:
+                systemCore.alu.OUT(instruction);
+                break;
+            case 63:
+                systemCore.alu.CHK(instruction);
+                break;
+            case 45:
+                systemCore.alu.JGT(instruction);
+                break;
+            case 30:
+                if (instruction.TrapCode > 15 || instruction.TrapCode < 0) {
+                    systemCore.registers.MFR |= 1;
+                    break;
+                }
+                systemCore.alu.trap(instruction);
+                break;
+            case 33:
+                systemCore.alu.FADD(instruction);
+                break;
+            case 34:
+                systemCore.alu.FSUB(instruction);
+                break;
+            case 35:
+                systemCore.alu.VADD(instruction);
+                break;
+            case 36:
+                systemCore.alu.VSUB(instruction);
+                break;
+            case 37:
+                systemCore.alu.CNVRT(instruction);
+                break;
+            case 50:
+                systemCore.alu.LDFR(instruction);
+                break;
+            case 87:
+                systemCore.alu.STFR(instruction);
+                break;
+            default:
+                systemCore.registers.MFR |= 4;
+                systemCore.registers.PC = systemCore.memory.ReadFromMemory(1);
+                systemCore.frame.PrintToDebugConsole("Illegal Operation Code");
                 break;
         }
 
-        if ((systemCore.registers.CC & bitMask) != 0) {
-            systemCore.registers.PC = ea;
-            systemCore.frame.PrintToDebugConsole(String.format("Executing JCC\n  CC: %d equals to required CC: %d jump to %H", systemCore.registers.CC, instruction.GPR_Index, ea));
-            return;
+        /*
+        if (!((instruction.opcode >= 4 && instruction.opcode <= 7) || (instruction.opcode >= 16 && instruction.opcode <= 18) || (instruction.opcode >= 25 && instruction.opcode <= 26))) {
+            registers.CC = 0;
         }
-        systemCore.frame.PrintToDebugConsole(String.format("Executing JCC\n  CC: %d does not equal to required CC: %d", systemCore.registers.CC, instruction.GPR_Index));
+        */
+
+        systemCore.systemFunctions.Delay();
     }
 
-    //Defining the JMA
-    public void JMA(InstructionComponents instruction) {
-        int ea = instruction.EA;
 
-        systemCore.registers.PC = ea;
-
-        systemCore.frame.PrintToDebugConsole(String.format("Executing JMA\n  Jump to %H", ea));
-    }
-
-    //Defining the JSR
-    public void JSR(InstructionComponents instruction) {
-        int ea = instruction.EA;
-
-        systemCore.registers.GPRS[3] = systemCore.registers.PC;
-        systemCore.registers.PC = ea;
-
-        systemCore.frame.PrintToDebugConsole(String.format("Executing JSR\n  Jump to %H, current Args at %H", ea, systemCore.registers.GPRS[0]));
-    }
-
-    //Defining the JGT
-    public void JGT(InstructionComponents instruction) {
-        int ea = instruction.IXEA;
-
-        if (systemCore.registers.GPRS[instruction.Rx] > systemCore.registers.GPRS[instruction.Ry]) {
-            systemCore.registers.PC = ea;
-            systemCore.frame.PrintToDebugConsole(String.format("Executing JGT\n  Jump to %H", ea));
-            return;
-        }
-
-        systemCore.frame.PrintToDebugConsole(String.format("Executing JGT\n  do not jump to %H", ea));
-    }
-
-    //Defining the RFS
-    public void RFS(InstructionComponents instruction) {
-        systemCore.registers.PC = systemCore.registers.GPRS[3];
-        systemCore.registers.GPRS[0] = instruction.Address;
-
-        systemCore.frame.PrintToDebugConsole(String.format("Executing RFS\n  Return to %H, return value at %H", systemCore.registers.GPRS[3], systemCore.registers.GPRS[0]));
-    }
-
-    //Defining the SOB
-    public void SOB(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing SOB");
-
-        int ea = instruction.EA;
-
-        systemCore.registers.GPRS[instruction.GPR_Index]--;
-        if (systemCore.registers.GPRS[instruction.GPR_Index] < 0) {
-            systemCore.registers.GPRS[instruction.GPR_Index] = (int) (Math.pow(2, 16) - 1);
-            systemCore.registers.CC |= 2;
-            systemCore.frame.PrintToDebugConsole("  Underflow!");
-        }
-
-        if (systemCore.registers.GPRS[instruction.GPR_Index] > 0) {
-            systemCore.registers.PC = ea;
-            systemCore.frame.PrintToDebugConsole(String.format("  GPR%d: %d, jump to %H", instruction.GPR_Index, systemCore.registers.GPRS[instruction.GPR_Index], ea));
-            return;
-        }
-        systemCore.frame.PrintToDebugConsole(String.format("  GPR%d: %d, not jump", instruction.GPR_Index, systemCore.registers.GPRS[instruction.GPR_Index]));
-    }
-
-    //Defining the JGE
-    public void JGE(InstructionComponents instruction) {
-        int ea = instruction.EA;
-
-        if (systemCore.registers.GPRS[instruction.GPR_Index] >= 0) {
-            systemCore.registers.PC = ea;
-            systemCore.frame.PrintToDebugConsole(String.format("Executing JGE\n  GRP%d: %d, jump to %H", instruction.GPR_Index, systemCore.registers.GPRS[instruction.GPR_Index], ea));
-            return;
-        }
-        systemCore.frame.PrintToDebugConsole(String.format("Executing JGE\n  GRP%d: %d, not jump", instruction.GPR_Index, systemCore.registers.GPRS[instruction.GPR_Index]));
-    }
-
-    //Defining the AMR
-    public void AMR(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing AMR");
-
-        int ea = instruction.EA;
-
-        if (ea > systemCore.memory.ProcessorMemory.length) {
-            systemCore.registers.MFR |= 8;
-            systemCore.frame.PrintToDebugConsole("Illegal Memory Address beyond " + systemCore.memory.ProcessorMemory.length);
-            systemCore.registers.PC = systemCore.memory.ReadFromMemory(1);
-            return;
-        }
-
-        if (ea >= 0 && ea <= 5) {
-            systemCore.registers.MFR |= 1;
-            systemCore.frame.PrintToDebugConsole("Illegal Memory Address to Reserved Locations");
-            systemCore.registers.PC = systemCore.memory.ReadFromMemory(1);
-            return;
-        }
-
-        systemCore.registers.GPRS[instruction.GPR_Index] += systemCore.memory.ReadFromMemory(ea);
-        if (systemCore.registers.GPRS[instruction.GPR_Index] > 65535) {
-            systemCore.registers.GPRS[instruction.GPR_Index] -= 65536;
-            systemCore.registers.CC |= 1;
-            systemCore.frame.PrintToDebugConsole("  Overflow!");
-        }
-
-        systemCore.frame.PrintToDebugConsole(String.format("  Add %d at %H to GPR%d, result is %d", systemCore.memory.ProcessorMemory[ea], ea, instruction.GPR_Index, systemCore.registers.GPRS[instruction.GPR_Index]));
-    }
-
-    //Defining the SMR
-    public void SMR(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing SMR");
-
-        int ea = instruction.EA;
-
-        if (ea > systemCore.memory.ProcessorMemory.length) {
-            systemCore.registers.MFR |= 8;
-            systemCore.frame.PrintToDebugConsole("Illegal Memory Address beyond " + systemCore.memory.ProcessorMemory.length);
-            systemCore.registers.PC = systemCore.memory.ReadFromMemory(1);
-            return;
-        }
-
-        if (ea >= 0 && ea <= 5) {
-            systemCore.registers.MFR |= 1;
-            systemCore.frame.PrintToDebugConsole("Illegal Memory Address to Reserved Locations");
-            systemCore.registers.PC = systemCore.memory.ReadFromMemory(1);
-            return;
-        }
-
-        systemCore.registers.GPRS[instruction.GPR_Index] -= systemCore.memory.ReadFromMemory(ea);
-        if (systemCore.registers.GPRS[instruction.GPR_Index] < 0) {
-            systemCore.registers.GPRS[instruction.GPR_Index] += 65536;
-            systemCore.registers.CC |= 2;
-            systemCore.frame.PrintToDebugConsole("  Underflow!");
-        }
-
-        systemCore.frame.PrintToDebugConsole(String.format("  Sub %d at %H from GPR%d, result is %d", systemCore.memory.ProcessorMemory[ea], ea, instruction.GPR_Index, systemCore.registers.GPRS[instruction.GPR_Index]));
-    }
-
-    //Defining the AIR
-    public void AIR(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing AIR");
-
-        int ea = instruction.EA;
-
-        systemCore.registers.GPRS[instruction.GPR_Index] += ea;
-
-        if (systemCore.registers.GPRS[instruction.GPR_Index] > 65535) {
-            systemCore.registers.GPRS[instruction.GPR_Index] -= 65536;
-            systemCore.registers.CC |= 1;
-            systemCore.frame.PrintToDebugConsole("  Overflow!");
-        }
-
-        systemCore.frame.PrintToDebugConsole(String.format("  Add %d to GPR%d, result is %d", ea, instruction.GPR_Index, systemCore.registers.GPRS[instruction.GPR_Index]));
-    }
-
-    //Defining the SIR
-    public void SIR(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing SIR");
-
-        int ea = instruction.EA;
-
-        systemCore.registers.GPRS[instruction.GPR_Index] -= ea;
-
-        if (systemCore.registers.GPRS[instruction.GPR_Index] < 0) {
-            systemCore.registers.GPRS[instruction.GPR_Index] += 65536;
-            systemCore.registers.CC |= 2;
-            systemCore.frame.PrintToDebugConsole("  Underflow!");
-        }
-
-        systemCore.frame.PrintToDebugConsole(String.format("  Sub %d from GPR%d, result is %d", ea, instruction.GPR_Index, systemCore.registers.GPRS[instruction.GPR_Index]));
-    }
-
-    //Defining the MLT
-    public void MLT(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing MLT");
-
-        long result = (long) systemCore.registers.GPRS[instruction.Rx] * systemCore.registers.GPRS[instruction.Ry];
-        String resultStr = String.format("%32s", Long.toBinaryString(result)).replace(' ', '0');
-
-        String hBits = resultStr.substring(0, 16);
-        String lBits = resultStr.substring(16, 32);
-
-        systemCore.registers.GPRS[instruction.Rx] = Integer.parseInt(hBits, 2);
-        systemCore.registers.GPRS[instruction.Rx + 1] = Integer.parseInt(lBits, 2);
-
-        systemCore.frame.PrintToDebugConsole(String.format("  MLT r%d with r%d, result is %d %s %s %s", instruction.Rx, instruction.Ry, result, resultStr, hBits, lBits));
-    }
-
-    //Defining the DVD
-    public void DVD(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing DVD");
-
-        if (systemCore.registers.GPRS[instruction.Ry] == 0) {
-            systemCore.frame.PrintToDebugConsole("  Divide by 0");
-            systemCore.registers.CC |= 4;
-            return;
-        }
-
-        int quotient = systemCore.registers.GPRS[instruction.Rx] / systemCore.registers.GPRS[instruction.Ry];
-        int remainder = systemCore.registers.GPRS[instruction.Rx] % systemCore.registers.GPRS[instruction.Ry];
-
-        systemCore.registers.GPRS[instruction.Rx] = quotient;
-        systemCore.registers.GPRS[instruction.Rx + 1] = remainder;
-
-        systemCore.frame.PrintToDebugConsole(String.format(" DVD r%d with r%d, quotient is %d, remainder is %d", instruction.Rx, instruction.Ry, quotient, remainder));
-    }
-
-    //Defining the TRR
-    public void TRR(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing TRR");
-
-        if (systemCore.registers.GPRS[instruction.Rx] == systemCore.registers.GPRS[instruction.Ry]) {
-            systemCore.registers.CC |= 8;
-            systemCore.frame.PrintToDebugConsole(String.format("  r%d equals to r%d", instruction.Rx, instruction.Ry));
-            return;
-        }
-
-        systemCore.frame.PrintToDebugConsole(String.format("  r%d does not equal to r%d", instruction.Rx, instruction.Ry));
-    }
-
-    //Defining the AND
-    public void AND(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing AND");
-
-        systemCore.registers.GPRS[instruction.Rx] &= systemCore.registers.GPRS[instruction.Ry];
-
-        systemCore.frame.PrintToDebugConsole(String.format("  r%d AND r%d", instruction.Rx, instruction.Ry));
-    }
-
-    //Defining the ORR
-    public void ORR(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing ORR");
-
-        systemCore.registers.GPRS[instruction.Rx] |= systemCore.registers.GPRS[instruction.Ry];
-
-        systemCore.frame.PrintToDebugConsole(String.format("  r%d ORR r%d", instruction.Rx, instruction.Ry));
-    }
-
-    //Defining the NOT
-    public void NOT(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing NOT");
-
-        int result = ~systemCore.registers.GPRS[instruction.Rx];
-        String resultStr = Integer.toBinaryString(result);
-        resultStr = resultStr.substring(resultStr.length() - 16);
-
-        systemCore.registers.GPRS[instruction.Rx] = Integer.parseInt(resultStr, 2);
-
-        systemCore.frame.PrintToDebugConsole(String.format("  NOT r%d", instruction.Rx));
-    }
-
-    //Defining the SRC
-    public void SRC(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing SRC");
-
-        String origin = String.format("%16S", Integer.toBinaryString(systemCore.registers.GPRS[instruction.GPR_Index])).replace(' ', '0');
-        StringBuilder result = new StringBuilder();
-
-        if (instruction.RL == 0) {
-            if (origin.substring(16 - instruction.Count).contains("1")) {
-                systemCore.registers.CC |= 2;
-                systemCore.frame.PrintToDebugConsole("  Underflow!");
-            }
-        } else {
-            System.out.println(origin.substring(0, instruction.Count));
-            if (origin.substring(0, instruction.Count).contains("1")) {
-                systemCore.registers.CC |= 1;
-                systemCore.frame.PrintToDebugConsole("  Overflow!");
-            }
-        }
-
-        if (instruction.AL == 1) {
-            if (instruction.RL == 0) {
-                systemCore.frame.PrintToDebugConsole("Shifting right");
-                for (int j = 0; j < instruction.Count; j++) {
-                    result.append('0');
-                }
-                result.append(origin, 0, 16 - instruction.Count);
+    public int computeEA(InstructionComponents instruction) {
+        if (instruction.I_bit == 0) {
+            if (instruction.IXR_Index >= 0) {
+                return instruction.Address + systemCore.registers.IXRS[instruction.IXR_Index];
             } else {
-                systemCore.frame.PrintToDebugConsole("Shifting left");
-                result.append(origin.substring(instruction.Count));
-                for (int j = 0; j < instruction.Count; j++) {
-                    result.append('0');
-                }
+                return instruction.Address;
             }
         } else {
-            systemCore.frame.PrintToDebugConsole("Shift arithmetically");
-            char maskBit = origin.charAt(0);
-
-            if (instruction.RL == 0) {
-                systemCore.frame.PrintToDebugConsole("Shifting right");
-                for (int j = 0; j < instruction.Count; j++) {
-                    result.append(maskBit);
-                }
-                result.append(origin, 0, 16 - instruction.Count);
+            if (instruction.IXR_Index >= 0) {
+                return systemCore.memory.ReadFromMemory(instruction.Address) + systemCore.memory.ReadFromMemory(systemCore.registers.IXRS[instruction.IXR_Index]);
             } else {
-                systemCore.frame.PrintToDebugConsole("Shifting left");
-                result.append(origin.substring(instruction.Count));
-                for (int j = 0; j < instruction.Count; j++) {
-                    result.append('0');
-                }
+                return systemCore.memory.ReadFromMemory(instruction.Address);
+            }
+        }
+    }
+
+    //Connecting and updating the memory.ProcessorMemory
+    public int computeIXREA(InstructionComponents instruction) {
+        if (instruction.I_bit == 0) {
+            return instruction.Address;
+        } else {
+            return systemCore.memory.ReadFromMemory(instruction.Address);
+        }
+    }
+
+
+    public double convertToFloat(int content) {
+        double number;
+
+        String bits = String.format("%16S", Integer.toBinaryString(content).replace(' ', '0'));
+
+        int S_Bit = Integer.parseInt(bits.substring(0, 1), 2);
+        int Exponent = Integer.parseInt(bits.substring(1, 8), 2) - 63;
+        int Mantissa = Integer.parseInt(bits.substring(8), 2);
+
+        number = Mantissa * Math.pow(10, Exponent);
+
+        if (S_Bit == 0)
+        {
+            number = 0 - number;
+        }
+
+//        System.out.println(convertToFloat("33538"));   // Sting 1100001100000010
+
+        return number;
+    }
+
+
+    public int getIntValofFloat(double number)
+    {
+        String s = String.valueOf(number);
+        int n = s.length();
+
+        StringBuilder num_string = new StringBuilder();
+        int i, j, exponent, c;
+
+        for (i = 0; s.charAt(i) == '0' || s.charAt(i) == '.'; i++)
+            ;
+        for (j = n - 1; s.charAt(j) == '0' || s.charAt(j) == '.'; j--)
+            ;
+
+        c = s.indexOf('.');
+
+        if (c == -1) {
+            c = n;
+        }
+
+        num_string.append(s.charAt(i));
+
+        if (i != j) {
+            num_string.append('.');
+        }
+
+        for (int k = i + 1; k <= j; k++) {
+            if (s.charAt(k) != '.') {
+                num_string.append(s.charAt(k));
             }
         }
 
-        systemCore.registers.GPRS[instruction.GPR_Index] = Integer.parseInt(result.toString(), 2);
-
-        systemCore.frame.PrintToDebugConsole(String.format("  Prev binary: %s, result: %s", origin, result));
-    }
-
-    //Defining the RRC
-    public void RRC(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing RRC");
-
-        String origin = String.format("%16S", Integer.toBinaryString(systemCore.registers.GPRS[instruction.GPR_Index])).replace(' ', '0');
-        String result;
-
-        if (instruction.RL == 0) {
-            systemCore.frame.PrintToDebugConsole("Rotating right");
-            result = origin.substring(16 - instruction.Count) + origin.substring(0, 16 - instruction.Count);
-        } else {
-            systemCore.frame.PrintToDebugConsole("Rotating left");
-            result = origin.substring(instruction.Count) + origin.substring(0, instruction.Count);
+        if (i < c) {
+            exponent = c - i - 1;
+        }
+        else {
+            exponent = c - i;
         }
 
-        systemCore.registers.GPRS[instruction.GPR_Index] = Integer.parseInt(result, 2);
-
-        systemCore.frame.PrintToDebugConsole(String.format("  Prev binary: %s, result: %s", origin, result));
-    }
-
-    public void IN(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing IN");
-
-        int devID = instruction.EA;
-
-        char c;
-
-        if (devID == 0) {
-            c = systemCore.frame.GetKeyBoardChar();
-            systemCore.registers.GPRS[instruction.GPR_Index] = c;
-            systemCore.frame.PrintToDebugConsole(String.format("  Read %c from keyboard, store to gpr%d", c, instruction.GPR_Index));
-        } else if (devID == 2) {
-            c = systemCore.frame.GetCardReaderChar();
-            systemCore.registers.GPRS[instruction.GPR_Index] = c;
-            systemCore.frame.PrintToDebugConsole(String.format("  Read %c from card reader, store to gpr%d", c, instruction.GPR_Index));
-        } else {
-            systemCore.frame.PrintToDebugConsole("  Invalid operands");
-        }
-    }
-
-    //Defining the OUT
-    public void OUT(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing OUT");
-
-        int devID = instruction.Address;
-
-        if (devID != 1) {
-            systemCore.frame.PrintToDebugConsole("  Invalid operands");
-            return;
-        }
-
-        if (instruction.I_bit == 1) {
-            systemCore.frame.InsertCharToConsole((char) systemCore.registers.GPRS[instruction.GPR_Index]);
-        } else {
-            systemCore.frame.PrintCharToConsole((char) systemCore.registers.GPRS[instruction.GPR_Index]);
-        }
+        i = 0;
+        StringBuilder new_num_string = new StringBuilder();
 
 
-        systemCore.frame.PrintToDebugConsole(String.format("  Print %c to console printer", (char) systemCore.registers.GPRS[instruction.GPR_Index]));
-    }
+        while (true)
+        {
 
-    //Defining the CHK
-    public void CHK(InstructionComponents instruction) {
-        systemCore.frame.PrintToDebugConsole("Executing CHK");
-
-        int devID = instruction.EA;
-
-        if (devID == 0) {
-            if (systemCore.frame.CheckKeyBoardBuffer()) {
-                systemCore.registers.GPRS[instruction.GPR_Index] = 0;
-                systemCore.frame.PrintToDebugConsole("  No keyboard input to CacheRead");
-            } else {
-                systemCore.registers.GPRS[instruction.GPR_Index] = 1;
-                systemCore.frame.PrintToDebugConsole("  There is keyboard input to CacheRead");
+            if (num_string.charAt(i) != '.')
+            {
+                new_num_string.append(num_string.charAt(i));
             }
-        } else if (devID == 2) {
-            if (systemCore.frame.CheckCardReaderBuffer()) {
-                systemCore.registers.GPRS[instruction.GPR_Index] = 0;
-                systemCore.frame.PrintToDebugConsole("  No card reader input to CacheRead");
-            } else {
-                systemCore.registers.GPRS[instruction.GPR_Index] = 1;
-                systemCore.frame.PrintToDebugConsole("  There is card reader input to CacheRead");
+
+            if (new_num_string.length() == 3)
+            {
+                break;
             }
-        } else if (devID == 1) {
-            systemCore.registers.GPRS[instruction.GPR_Index] = 1;
-            systemCore.frame.PrintToDebugConsole("  Console printer is enabled");
-        } else {
-            systemCore.registers.GPRS[instruction.GPR_Index] = 0;
+
+            i++;
         }
-    }
+
+        exponent = exponent - 2;
 
 
-    public void FADD(InstructionComponents instruction) throws Exception {
-        systemCore.frame.PrintToDebugConsole("Executing FADD");
+        int mantissa = Integer.parseInt(new_num_string.toString());
 
-        if (instruction.FR_Index > 1)
+        if (mantissa > 255)
         {
-            throw new Exception("FR can only be 0 or 1");
+            mantissa = Integer.parseInt(String.valueOf(mantissa).substring(0, 2));
+            exponent++;
         }
 
-        double x = systemCore.utils.convertToFloat(systemCore.memory.ReadFromMemory(instruction.EA));
-        double y = systemCore.utils.convertToFloat(systemCore.registers.FRS[instruction.FR_Index]);
 
-        x = x + y;
 
-        systemCore.registers.FRS[instruction.FR_Index] = systemCore.utils.getIntValofFloat(x);
 
-        systemCore.frame.PrintToDebugConsole(String.format("Added %.2f and %.2f and stored in FR%d", x, y, instruction.FR_Index));
 
-    }
+        String Final_Num_Bin = "";
 
-    public void FSUB(InstructionComponents instruction) throws Exception {
-        systemCore.frame.PrintToDebugConsole("Executing FADD");
-
-        if (instruction.FR_Index > 1)
+        if (number < 0)
         {
-            throw new Exception("FR can only be 0 or 1");
+            Final_Num_Bin = Final_Num_Bin + "0";
         }
-
-        double x = systemCore.utils.convertToFloat(systemCore.memory.ReadFromMemory(instruction.EA));
-        double y = systemCore.utils.convertToFloat(systemCore.registers.FRS[instruction.FR_Index]);
-
-        x = x - y;
-
-        systemCore.registers.FRS[instruction.FR_Index] = systemCore.utils.getIntValofFloat(x);
-
-        systemCore.frame.PrintToDebugConsole(String.format("Subtracted %.2f from %.2f and stored in FR%d", y, x, instruction.FR_Index));
-
-    }
-
-    public void CNVRT(InstructionComponents instruction) throws Exception {
-        systemCore.frame.PrintToDebugConsole("Executing FADD");
-
-        if (instruction.FR_Index > 1)
+        else
         {
-            throw new Exception("FR can only be 0 or 1");
+            Final_Num_Bin = Final_Num_Bin + "1";
         }
 
-        if (instruction.FR_Index == 1)
+
+        if (exponent == 0)
         {
-            double x = systemCore.utils.convertToFloat(systemCore.memory.ReadFromMemory(instruction.EA));
-            systemCore.memory.WriteToMemory(instruction.EA, systemCore.utils.getIntValofFloat(x));
-
-            systemCore.registers.FRS[0] = systemCore.utils.getIntValofFloat(x);
-
-            systemCore.frame.PrintToDebugConsole(String.format("Added %.2f and %.2f and stored in FR%d", instruction.FR_Index));
+            Final_Num_Bin = Final_Num_Bin + "0000000";
+        } else if (exponent > 0) {
+            Final_Num_Bin = Final_Num_Bin + String.format("%7S", Integer.toBinaryString(64 + exponent).replace(' ', '0'));
+        } else if (exponent < 0) {
+            Final_Num_Bin = Final_Num_Bin + "0";
+            Final_Num_Bin = Final_Num_Bin + String.format("%6S", Integer.toBinaryString(64 - Math.abs(exponent)).replace(' ', '0'));
         }
 
-        if (instruction.FR_Index == 0)
-        {
-            double x = systemCore.utils.convertToFloat(systemCore.memory.ReadFromMemory(instruction.EA));
-            int y = (int) x;
 
-            systemCore.registers.GPRS[0] = y;
-
-            systemCore.frame.PrintToDebugConsole(String.format("Added %.2f and %.2f and stored in FR%d", instruction.FR_Index));
-        }
-
-    }
-
-    public void LDFR(InstructionComponents instruction) throws Exception {
-        systemCore.frame.PrintToDebugConsole("Executing FADD");
-
-        if (instruction.FR_Index > 1)
-        {
-            throw new Exception("FR can only be 0 or 1");
-        }
-
-        systemCore.registers.FRS[instruction.FR_Index] = (systemCore.memory.ReadFromMemory(instruction.EA));
-
-//        systemCore.frame.PrintToDebugConsole(String.format("Subtracted %.2f from %.2f and stored in FR%d", y, x, instruction.FR_Index));
-    }
+        Final_Num_Bin = Final_Num_Bin + String.format("%8S", Integer.toBinaryString(mantissa).replace(' ', '0'));
 
 
-    public void STFR(InstructionComponents instruction) throws Exception {
-        systemCore.frame.PrintToDebugConsole("Executing FADD");
-
-        if (instruction.FR_Index > 1)
-        {
-            throw new Exception("FR can only be 0 or 1");
-        }
-
-        systemCore.memory.WriteToMemory(instruction.EA, systemCore.registers.FRS[instruction.FR_Index]);
-
-//        systemCore.frame.PrintToDebugConsole(String.format("Subtracted %.2f from %.2f and stored in FR%d", y, x, instruction.FR_Index));
-    }
-
-    public void VADD(InstructionComponents instruction) throws Exception {
-        systemCore.frame.PrintToDebugConsole("Executing FADD");
-
-        if (instruction.FR_Index > 1)
-        {
-            throw new Exception("FR can only be 0 or 1");
-        }
-
-        int count = instruction.Address;
-        double x = 0;
-        double y = 0;
-        double ans = 0;
-
-        int v1_address = instruction.EA;
-        int v2_address = instruction.EA+count;
-
-        for (int i=0; i<count;i++)
-        {
-            x = systemCore.utils.convertToFloat(systemCore.memory.ReadFromMemory(v1_address));
-            y = systemCore.utils.convertToFloat(systemCore.memory.ReadFromMemory(v2_address));
-
-            ans = x + y;
-
-            systemCore.memory.WriteToMemory(v1_address, systemCore.utils.getIntValofFloat(ans));
-        }
-
-        systemCore.frame.PrintToDebugConsole(String.format("Added %.2f and %.2f and stored in FR%d", x, y, instruction.FR_Index));
-
-    }
-
-
-    public void VSUB(InstructionComponents instruction) throws Exception {
-        systemCore.frame.PrintToDebugConsole("Executing FADD");
-
-        if (instruction.FR_Index > 1)
-        {
-            throw new Exception("FR can only be 0 or 1");
-        }
-
-        int count = instruction.Address;
-        double x = 0;
-        double y = 0;
-        double ans = 0;
-
-        int v1_address = instruction.EA;
-        int v2_address = instruction.EA+count;
-
-        for (int i=0; i<count;i++)
-        {
-            x = systemCore.utils.convertToFloat(systemCore.memory.ReadFromMemory(v1_address));
-            y = systemCore.utils.convertToFloat(systemCore.memory.ReadFromMemory(v2_address));
-
-            ans = x - y;
-
-            systemCore.memory.WriteToMemory(v1_address, systemCore.utils.getIntValofFloat(ans));
-        }
-
-        systemCore.frame.PrintToDebugConsole(String.format("Added %.2f and %.2f and stored in FR%d", x, y, instruction.FR_Index));
-
+        return Integer.parseInt(Final_Num_Bin, 2);
     }
 
 }
