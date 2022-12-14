@@ -154,7 +154,7 @@ public class Utils {
             case 50:
                 systemCore.alu.LDFR(instruction);
                 break;
-            case 87:
+            case 38:
                 systemCore.alu.STFR(instruction);
                 break;
             default:
