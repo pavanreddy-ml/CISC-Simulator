@@ -29,7 +29,7 @@ public class Utils {
         }
     }
 
-    public void exec(InstructionComponents instruction) {
+    public void exec(InstructionComponents instruction) throws Exception {
         instruction.EA = computeEA(instruction);
         instruction.IXEA = computeIXREA(instruction);
 
@@ -135,6 +135,27 @@ public class Utils {
                     break;
                 }
                 systemCore.alu.trap(instruction);
+                break;
+            case 81:
+                systemCore.alu.FADD(instruction);
+                break;
+            case 82:
+                systemCore.alu.FSUB(instruction);
+                break;
+            case 83:
+                systemCore.alu.VADD(instruction);
+                break;
+            case 84:
+                systemCore.alu.VSUB(instruction);
+                break;
+            case 85:
+                systemCore.alu.CNVRT(instruction);
+                break;
+            case 86:
+                systemCore.alu.LDFR(instruction);
+                break;
+            case 87:
+                systemCore.alu.STFR(instruction);
                 break;
             default:
                 systemCore.registers.MFR |= 4;

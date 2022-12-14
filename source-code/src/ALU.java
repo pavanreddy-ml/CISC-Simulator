@@ -587,7 +587,7 @@ public class ALU {
 
         if (instruction.FR_Index > 1)
         {
-            throw new Exception("FR can only be 0 or 1");
+            throw new Exception("FR is either 0 or 1");
         }
 
         double x = systemCore.utils.convertToFloat(systemCore.memory.ReadFromMemory(instruction.EA));
@@ -597,16 +597,16 @@ public class ALU {
 
         systemCore.registers.FRS[instruction.FR_Index] = systemCore.utils.getIntValofFloat(x);
 
-        systemCore.frame.PrintToDebugConsole(String.format("Added %.2f and %.2f and stored in FR%d", x, y, instruction.FR_Index));
+        systemCore.frame.PrintToDebugConsole(String.format("Float Adding %.2f and %.2f and storing in FR%d", x, y, instruction.FR_Index));
 
     }
 
     public void FSUB(InstructionComponents instruction) throws Exception {
-        systemCore.frame.PrintToDebugConsole("Executing FADD");
+        systemCore.frame.PrintToDebugConsole("Executing FSUB");
 
         if (instruction.FR_Index > 1)
         {
-            throw new Exception("FR can only be 0 or 1");
+            throw new Exception("FR is either 0 or 1");
         }
 
         double x = systemCore.utils.convertToFloat(systemCore.memory.ReadFromMemory(instruction.EA));
@@ -616,16 +616,16 @@ public class ALU {
 
         systemCore.registers.FRS[instruction.FR_Index] = systemCore.utils.getIntValofFloat(x);
 
-        systemCore.frame.PrintToDebugConsole(String.format("Subtracted %.2f from %.2f and stored in FR%d", y, x, instruction.FR_Index));
+        systemCore.frame.PrintToDebugConsole(String.format("Float Substracting %.2f and %.2f and storing in FR%d", y, x, instruction.FR_Index));
 
     }
 
     public void CNVRT(InstructionComponents instruction) throws Exception {
-        systemCore.frame.PrintToDebugConsole("Executing FADD");
+        systemCore.frame.PrintToDebugConsole("Executing CNVRT");
 
         if (instruction.FR_Index > 1)
         {
-            throw new Exception("FR can only be 0 or 1");
+            throw new Exception("FR is either 0 or 1");
         }
 
         if (instruction.FR_Index == 1)
@@ -635,7 +635,7 @@ public class ALU {
 
             systemCore.registers.FRS[0] = systemCore.utils.getIntValofFloat(x);
 
-            systemCore.frame.PrintToDebugConsole(String.format("Added %.2f and %.2f and stored in FR%d", instruction.FR_Index));
+            systemCore.frame.PrintToDebugConsole(String.format("%.2f is the converted floating-point number%d",systemCore.registers.FRS[0], instruction.FR_Index));
         }
 
         if (instruction.FR_Index == 0)
@@ -645,17 +645,17 @@ public class ALU {
 
             systemCore.registers.GPRS[0] = y;
 
-            systemCore.frame.PrintToDebugConsole(String.format("Added %.2f and %.2f and stored in FR%d", instruction.FR_Index));
+            systemCore.frame.PrintToDebugConsole(String.format("%d is the converted fixed-point number%d",systemCore.registers.GPRS[0], instruction.FR_Index));
         }
 
     }
 
     public void LDFR(InstructionComponents instruction) throws Exception {
-        systemCore.frame.PrintToDebugConsole("Executing FADD");
+        systemCore.frame.PrintToDebugConsole("Executing LDFR");
 
         if (instruction.FR_Index > 1)
         {
-            throw new Exception("FR can only be 0 or 1");
+            throw new Exception("FR is either 0 or 1");
         }
 
         systemCore.registers.FRS[instruction.FR_Index] = (systemCore.memory.ReadFromMemory(instruction.EA));
@@ -665,11 +665,11 @@ public class ALU {
 
 
     public void STFR(InstructionComponents instruction) throws Exception {
-        systemCore.frame.PrintToDebugConsole("Executing FADD");
+        systemCore.frame.PrintToDebugConsole("Executing STFR");
 
         if (instruction.FR_Index > 1)
         {
-            throw new Exception("FR can only be 0 or 1");
+            throw new Exception("FR is either 0 or 1");
         }
 
         systemCore.memory.WriteToMemory(instruction.EA, systemCore.registers.FRS[instruction.FR_Index]);
@@ -678,11 +678,11 @@ public class ALU {
     }
 
     public void VADD(InstructionComponents instruction) throws Exception {
-        systemCore.frame.PrintToDebugConsole("Executing FADD");
+        systemCore.frame.PrintToDebugConsole("Executing VADD");
 
         if (instruction.FR_Index > 1)
         {
-            throw new Exception("FR can only be 0 or 1");
+            throw new Exception("FR is either 0 or 1");
         }
 
         int count = instruction.Address;
@@ -703,17 +703,17 @@ public class ALU {
             systemCore.memory.WriteToMemory(v1_address, systemCore.utils.getIntValofFloat(ans));
         }
 
-        systemCore.frame.PrintToDebugConsole(String.format("Added %.2f and %.2f and stored in FR%d", x, y, instruction.FR_Index));
+        systemCore.frame.PrintToDebugConsole(String.format("Vector Adding %.2f and %.2f and storing in FR%d", x, y, instruction.FR_Index));
 
     }
 
 
     public void VSUB(InstructionComponents instruction) throws Exception {
-        systemCore.frame.PrintToDebugConsole("Executing FADD");
+        systemCore.frame.PrintToDebugConsole("Executing VSUB");
 
         if (instruction.FR_Index > 1)
         {
-            throw new Exception("FR can only be 0 or 1");
+            throw new Exception("FR is either 0 or 1");
         }
 
         int count = instruction.Address;
@@ -734,7 +734,7 @@ public class ALU {
             systemCore.memory.WriteToMemory(v1_address, systemCore.utils.getIntValofFloat(ans));
         }
 
-        systemCore.frame.PrintToDebugConsole(String.format("Added %.2f and %.2f and stored in FR%d", x, y, instruction.FR_Index));
+        systemCore.frame.PrintToDebugConsole(String.format("Vector Substracting %.2f and %.2f and storing in FR%d", x, y, instruction.FR_Index));
 
     }
 
